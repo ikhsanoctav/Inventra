@@ -1,0 +1,23 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class WorkShift extends Model
+{
+    protected $fillable = ['name', 'start_time', 'end_time', 'color_hex'];
+
+    protected function casts(): array
+    {
+        return [
+            'start_time' => 'datetime:H:i',
+            'end_time' => 'datetime:H:i',
+        ];
+    }
+
+    public function schedules()
+    {
+        return $this->hasMany(UserSchedule::class);
+    }
+}
