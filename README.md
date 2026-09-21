@@ -17,13 +17,15 @@
 Sistem ini sangat cocok digunakan oleh perusahaan, gudang, maupun instansi yang membutuhkan kontrol ketat terhadap pergerakan stok logistik mereka.
 
 ### ✨ Fitur Utama
-*   **Dashboard Interaktif**: Ringkasan data stok barang, barang masuk, dan barang keluar.
-*   **Manajemen Data Master**: Pengelolaan data kategori, satuan, rak penyimpanan, dan supplier.
-*   **Manajemen Stok / Inventaris**: Pencatatan barang dengan detail yang lengkap.
+*   **Point of Sale (POS) / Kasir**: Fitur transaksi penjualan langsung dengan antarmuka kasir yang responsif.
+*   **Manajemen Shift (Karyawan/Kasir)**: Pengaturan shift kerja, modal awal (cash in drawer), laporan pendapatan per shift, dan serah terima shift.
+*   **Dashboard Interaktif**: Ringkasan data stok barang, pendapatan, barang masuk, dan barang keluar.
+*   **Manajemen Data Master**: Pengelolaan data kategori, satuan, rak penyimpanan, pelanggan, dan supplier.
+*   **Manajemen Stok / Inventaris**: Pencatatan barang dengan detail yang lengkap dan otomatis terpotong saat ada transaksi POS.
 *   **Transaksi Logistik**: 
     *   **Barang Masuk**: Mencatat restok atau penerimaan barang dari supplier.
-    *   **Barang Keluar**: Mencatat pengeluaran barang untuk distribusi atau penggunaan.
-*   **Laporan & Cetak**: Pembuatan laporan ketersediaan stok dan mutasi barang secara berkala.
+    *   **Barang Keluar**: Mencatat pengeluaran barang (selain dari POS) untuk distribusi atau penggunaan.
+*   **Laporan & Cetak**: Pembuatan laporan ketersediaan stok, mutasi barang, laporan penjualan kasir, dan laporan shift secara berkala.
 
 ---
 
