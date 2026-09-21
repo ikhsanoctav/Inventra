@@ -1,6 +1,5 @@
 <div align="center">
-  <!-- Ganti URL gambar di bawah dengan URL/path logo asli sistem Anda -->
-  <img src="https://via.placeholder.com/200x200.png?text=Logo+Inventra" alt="Logo Inventra" width="200" style="border-radius: 20px; margin-bottom: 20px;">
+  <img src="public/images/logo.png" alt="Logo Inventra" width="200" style="border-radius: 20px; margin-bottom: 20px;">
 
   <h1>📦 Inventra (Sistem Inventaris Logistik)</h1>
   
