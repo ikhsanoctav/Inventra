@@ -142,6 +142,37 @@
                 </button>
             </form>
 
+            <!-- Demo Accounts -->
+            <div class="mt-8">
+                <div class="relative">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-slate-200"></div>
+                    </div>
+                    <div class="relative flex justify-center text-xs">
+                        <span class="bg-slate-50 px-2 text-slate-500">Akses Cepat (Demo)</span>
+                    </div>
+                </div>
+                
+                <div class="mt-6 grid grid-cols-2 gap-3">
+                    <button type="button" onclick="fillDemo('admin@inventra.go.id')" class="flex flex-col items-center justify-center gap-1 p-3 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 hover:border-indigo-300 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1">
+                        <span class="material-symbols-outlined text-indigo-500 text-[20px]">admin_panel_settings</span>
+                        <span class="text-xs font-semibold text-slate-700">Super Admin</span>
+                    </button>
+                    <button type="button" onclick="fillDemo('manager@inventra.go.id')" class="flex flex-col items-center justify-center gap-1 p-3 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 hover:border-indigo-300 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1">
+                        <span class="material-symbols-outlined text-purple-500 text-[20px]">monitoring</span>
+                        <span class="text-xs font-semibold text-slate-700">Manager</span>
+                    </button>
+                    <button type="button" onclick="fillDemo('gudang@inventra.go.id')" class="flex flex-col items-center justify-center gap-1 p-3 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 hover:border-indigo-300 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1">
+                        <span class="material-symbols-outlined text-emerald-500 text-[20px]">inventory_2</span>
+                        <span class="text-xs font-semibold text-slate-700">Admin Gudang</span>
+                    </button>
+                    <button type="button" onclick="fillDemo('kasir@inventra.go.id')" class="flex flex-col items-center justify-center gap-1 p-3 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 hover:border-indigo-300 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1">
+                        <span class="material-symbols-outlined text-sky-500 text-[20px]">point_of_sale</span>
+                        <span class="text-xs font-semibold text-slate-700">Kasir POS</span>
+                    </button>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
