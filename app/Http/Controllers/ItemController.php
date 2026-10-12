@@ -130,4 +130,14 @@ class ItemController extends Controller
 
         return redirect()->back()->with('success', "Barang '{$item->name}' berhasil dihapus!");
     }
+
+    public function generateSku(Request $request)
+    {
+        $categoryId = $request->query('category_id');
+        $type = $request->query('type', 'barang');
+
+        $sku = Item::generateSku($categoryId ? (int) $categoryId : null, $type);
+
+        return response()->json(['sku' => $sku]);
+    }
 }

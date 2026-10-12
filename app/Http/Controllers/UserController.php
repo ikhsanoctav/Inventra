@@ -26,7 +26,16 @@ class UserController extends Controller
             ->paginate($request->get('per_page', 10))
             ->appends($request->all());
 
-        return view('system.users.index', compact('users'));
+        $counts = [
+            'total' => User::count(),
+            'super_admin' => User::where('role', 'super_admin')->count(),
+            'manager' => User::where('role', 'manager')->count(),
+            'admin_gudang' => User::where('role', 'admin_gudang')->count(),
+            'purchasing' => User::where('role', 'purchasing')->count(),
+            'kasir' => User::where('role', 'kasir')->count(),
+        ];
+
+        return view('system.users.index', compact('users', 'counts'));
     }
 
     public function store(Request $request)

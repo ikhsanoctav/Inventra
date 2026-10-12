@@ -3,7 +3,31 @@
 @section('header_title', 'Master Data Barang & Jasa')
 
 @section('main_content')
-<div class="space-y-6" x-data="{ showModal: false, editMode: false, item: {} }">
+<div class="space-y-6" x-data="{ 
+    showModal: false, 
+    editMode: false, 
+    item: {},
+    async generateSku() {
+        try {
+            const categoryId = this.item.category_id || '';
+            const type = this.item.type || 'barang';
+            const res = await fetch(`{{ route('master.items.generate_sku') }}?category_id=${categoryId}&type=${type}`);
+            const data = await res.json();
+            if (data && data.sku) {
+                this.item.sku = data.sku;
+            }
+        } catch(e) {
+            const kat = 'GEN';
+            const kode = (this.item.type === 'jasa') ? 'JSA' : 'BRG';
+            const now = new Date();
+            const yy = String(now.getFullYear()).slice(-2);
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            const urut = String(Math.floor(1 + Math.random() * 999)).padStart(3, '0');
+            this.item.sku = `${kat}-${kode}-${yy}${mm}${dd}-${urut}`;
+        }
+    }
+}">
     <!-- Header Section -->
     <div class="flex flex-wrap items-center justify-between gap-4">
         <div class="min-w-[200px] flex-1">
@@ -12,6 +36,9 @@
         </div>
         
         <div class="flex items-center gap-3 shrink-0">
+            <a href="{{ route('gudang.barcode.index') }}" class="h-10 px-4 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-semibold flex items-center gap-2 shadow-sm transition-all shrink-0">
+                <span class="material-symbols-outlined text-[18px] text-indigo-600">qr_code_2</span> <span>Cetak Label Barcode</span>
+            </a>
             <button @click="showModal = true; editMode = false; item = {}" class="h-10 px-4 rounded-lg bg-[#4F46E5] hover:bg-[#4338CA] text-white text-sm font-semibold flex items-center gap-2 shadow-sm shadow-indigo-500/20 transition-all shrink-0">
                 <span class="material-symbols-outlined text-[18px]">add</span> <span>Tambah Data</span>
             </button>
@@ -132,13 +159,18 @@
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center justify-center gap-2">
-                                    <button @click="item = {{ json_encode($i) }}; editMode = true; showModal = true" class="text-slate-400 hover:text-indigo-600 transition-colors">
+                                    @if($i->type === 'barang')
+                                        <a href="{{ route('gudang.barcode.index', ['search' => $i->sku]) }}" title="Cetak Stiker Label Barcode" class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                                            <span class="material-symbols-outlined text-[18px]">qr_code_2</span>
+                                        </a>
+                                    @endif
+                                    <button @click="item = {{ json_encode($i) }}; editMode = true; showModal = true" title="Edit Data" class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
                                         <span class="material-symbols-outlined text-[18px]">edit</span>
                                     </button>
                                     <form action="{{ route('master.items.destroy', $i->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus item ini?');" class="inline-block">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="text-slate-400 hover:text-red-600 transition-colors">
+                                        <button type="submit" title="Hapus Data" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                                             <span class="material-symbols-outlined text-[18px]">delete</span>
                                         </button>
                                     </form>
@@ -212,8 +244,17 @@
                         </div>
 
                         <div class="space-y-1">
-                            <label class="font-medium text-slate-700">SKU / Kode <span class="text-red-500">*</span></label>
-                            <input type="text" name="sku" x-model="item.sku" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                            <div class="flex items-center justify-between">
+                                <label class="font-medium text-slate-700">SKU / Kode Barcode <span class="text-red-500">*</span></label>
+                                <button type="button" 
+                                        @click="generateSku()" 
+                                        class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1 cursor-pointer">
+                                    <span class="material-symbols-outlined text-[14px]">autorenew</span>
+                                    <span>Generate Otomatis</span>
+                                </button>
+                            </div>
+                            <input type="text" name="sku" x-model="item.sku" placeholder="Scan barcode pabrik atau klik Generate..." class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm uppercase" required>
+                            <p class="text-[11px] text-slate-400">Format sistem: <span class="font-mono text-indigo-600 font-bold">KAT-KODE-YYMMDD-URUT</span> (misal: <code>ATK-BRG-261009-001</code>) atau isi nomor barcode pabrik.</p>
                         </div>
                         
                         <div class="space-y-1">

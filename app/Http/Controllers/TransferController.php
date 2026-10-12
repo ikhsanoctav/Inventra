@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\StockUpdated;
 use App\Models\Item;
 use App\Models\Transaction;
 use App\Models\TransactionLine;
@@ -9,6 +10,7 @@ use App\Models\User;
 use App\Models\Warehouse;
 use App\Notifications\TransferCompletedNotification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class TransferController extends Controller
 {
@@ -120,7 +122,22 @@ class TransferController extends Controller
         if ($transaction->status === 'Completed') {
             return redirect()->back()->with('error', 'Mutasi sudah Selesai.');
         }
-        $transaction->update(['status' => 'Completed']);
+
+        $affected = Transaction::where('id', $transaction->id)
+            ->where('status', '!=', 'Completed')
+            ->update(['status' => 'Completed']);
+
+        if ($affected === 0) {
+            return redirect()->back()->with('error', 'Mutasi sudah Selesai sebelumnya.');
+        }
+
+        $transaction->refresh();
+
+        try {
+            event(new StockUpdated("Mutasi Antar Gudang {$transaction->ref_number} telah diselesaikan."));
+        } catch (\Throwable $e) {
+            Log::warning('StockUpdated event broadcast error: '.$e->getMessage());
+        }
 
         // Notify roles
         $usersToNotify = User::whereIn('role', ['admin_gudang', 'manager', 'super_admin'])->get();

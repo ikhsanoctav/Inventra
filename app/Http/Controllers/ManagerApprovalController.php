@@ -2,30 +2,69 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DamagedItem;
+use App\Models\DataRequest;
 use App\Models\Transaction;
 
 class ManagerApprovalController extends Controller
 {
     public function index()
     {
-        // Get all POs that need approval
-        $pendingPOs = Transaction::with(['user', 'lines'])
+        // 1. Purchase Orders pending approval
+        $pendingPOs = Transaction::with(['user', 'lines.item'])
             ->where('type', 'PO')
-            ->where('status', 'Pending Approval')
-            ->orWhere(function ($q) {
-                $q->where('type', 'PO')->where('status', 'Draft'); // Often they just submit draft, we can show drafts too or just pending
-            })
+            ->whereIn('status', ['Pending Approval', 'Draft'])
             ->latest()
             ->get();
 
-        // Get Stock Opname that need approval (if we have a status for it)
-        $pendingOpnames = Transaction::with(['user', 'lines'])
+        // 2. Stock Opnames
+        $pendingOpnames = Transaction::with(['user', 'lines.item'])
             ->where('type', 'Opname')
-            ->where('status', 'Draft')
+            ->latest()
+            ->take(15)
+            ->get();
+
+        // 3. Warehouse Data Requests pending approval
+        $pendingRequests = DataRequest::with(['user', 'reviewer'])
+            ->where('status', 'Menunggu')
             ->latest()
             ->get();
 
-        return view('manager.approvals.index', compact('pendingPOs', 'pendingOpnames'));
+        // 4. Damaged Items pending manager review / action
+        $pendingDamagedItems = DamagedItem::with(['user', 'item.uom', 'branch'])
+            ->where('status', 'Dalam Karantina')
+            ->latest()
+            ->get();
+
+        // 5. Recent Processed Decisions (Approved/Rejected)
+        $recentPOs = Transaction::with(['user', 'lines.item'])
+            ->where('type', 'PO')
+            ->whereIn('status', ['Approved', 'Rejected', 'Completed'])
+            ->latest()
+            ->take(10)
+            ->get();
+
+        $recentRequests = DataRequest::with(['user', 'reviewer'])
+            ->whereIn('status', ['Disetujui', 'Ditolak'])
+            ->latest()
+            ->take(10)
+            ->get();
+
+        $recentDamagedItems = DamagedItem::with(['user', 'item.uom', 'branch'])
+            ->whereIn('status', ['Dimusnahkan', 'Retur Supplier', 'Selesai', 'Dibatalkan'])
+            ->latest()
+            ->take(10)
+            ->get();
+
+        return view('manager.approvals.index', compact(
+            'pendingPOs',
+            'pendingOpnames',
+            'pendingRequests',
+            'pendingDamagedItems',
+            'recentPOs',
+            'recentRequests',
+            'recentDamagedItems'
+        ));
     }
 
     public function auditOpname()

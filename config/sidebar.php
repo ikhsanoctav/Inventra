@@ -23,6 +23,7 @@ return [
                 ['title' => 'Satuan (UoM)', 'route' => 'master.units', 'icon' => 'square_foot'],
                 ['title' => 'Data Supplier', 'route' => 'master.suppliers', 'icon' => 'local_shipping'],
                 ['title' => 'Data Cabang/Outlet', 'route' => 'master.branches', 'icon' => 'store'],
+                ['title' => 'Cetak Label Barcode', 'route' => 'gudang.barcode.index', 'icon' => 'qr_code_2'],
             ],
         ],
         [
@@ -31,6 +32,7 @@ return [
             'submenus' => [
                 ['title' => 'Barang Masuk (Inbound)', 'route' => 'transactions.inbound', 'icon' => 'login'],
                 ['title' => 'Barang Keluar (Outbound)', 'route' => 'transactions.outbound', 'icon' => 'logout'],
+                ['title' => 'Barang Rusak / Karantina', 'route' => 'gudang.damaged_items.index', 'icon' => 'warning'],
                 ['title' => 'Stock Opname', 'route' => 'transactions.opname.index', 'icon' => 'fact_check'],
                 ['title' => 'Mutasi Antar Gudang', 'route' => 'transactions.transfer', 'icon' => 'swap_horiz'],
             ],
@@ -67,6 +69,7 @@ return [
                 ['title' => 'Manajemen Pengguna', 'route' => 'system.users', 'icon' => 'manage_accounts'],
                 ['title' => 'Jadwal & Shift Kerja', 'route' => 'system.schedules.index', 'icon' => 'calendar_month'],
                 ['title' => 'Rule Builder (RBL)', 'route' => 'system.rbl', 'icon' => 'rule'],
+                ['title' => 'Backup & Pemeliharaan', 'route' => 'system.backup', 'icon' => 'database'],
                 ['title' => 'General Settings', 'route' => 'system.settings', 'icon' => 'settings'],
                 ['title' => 'Activity/Audit Log', 'route' => 'system.audit', 'icon' => 'history'],
             ],
@@ -130,6 +133,7 @@ return [
             'icon' => 'inventory_2',
             'submenus' => [
                 ['title' => 'Lihat Barang & Jasa', 'route' => 'master.items', 'icon' => 'visibility'],
+                ['title' => 'Cetak Label Barcode', 'route' => 'gudang.barcode.index', 'icon' => 'qr_code_2'],
                 ['title' => 'Request Perubahan', 'route' => 'gudang.requests', 'icon' => 'send'],
             ],
         ],
@@ -139,6 +143,7 @@ return [
             'submenus' => [
                 ['title' => 'Barang Masuk', 'route' => 'transactions.inbound', 'icon' => 'login'],
                 ['title' => 'Barang Keluar', 'route' => 'transactions.outbound', 'icon' => 'logout'],
+                ['title' => 'Barang Rusak / Karantina', 'route' => 'gudang.damaged_items.index', 'icon' => 'warning'],
                 ['title' => 'Surat Jalan', 'route' => 'gudang.delivery_note', 'icon' => 'file_upload'],
                 ['title' => 'Stock Opname', 'route' => 'transactions.opname.index', 'icon' => 'fact_check'],
             ],

@@ -83,7 +83,11 @@ class RuleEngineService
 
                 // We can also fire a generic event here that WebSockets can pick up
                 if (class_exists(StockUpdated::class)) {
-                    event(new StockUpdated("Otomatisasi: {$message}"));
+                    try {
+                        event(new StockUpdated("Otomatisasi: {$message}"));
+                    } catch (\Throwable $e) {
+                        Log::warning('StockUpdated broadcast warning in RuleEngine: '.$e->getMessage());
+                    }
                 }
             }
 

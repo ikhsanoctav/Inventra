@@ -75,7 +75,7 @@
             </div>
             <div>
                 <p class="text-[11px] text-slate-500 font-medium">Total Akun</p>
-                <p class="text-lg font-bold text-slate-800">{{ count($users) }}</p>
+                <p class="text-lg font-bold text-slate-800">{{ $counts['total'] ?? $users->total() }}</p>
             </div>
         </div>
         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
@@ -84,7 +84,7 @@
             </div>
             <div>
                 <p class="text-[11px] text-slate-500 font-medium">Super Admin</p>
-                <p class="text-lg font-bold text-slate-800">{{ $users->where('role', 'super_admin')->count() }}</p>
+                <p class="text-lg font-bold text-slate-800">{{ $counts['super_admin'] ?? 0 }}</p>
             </div>
         </div>
         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
@@ -93,7 +93,7 @@
             </div>
             <div>
                 <p class="text-[11px] text-slate-500 font-medium">Manager</p>
-                <p class="text-lg font-bold text-slate-800">{{ $users->where('role', 'manager')->count() }}</p>
+                <p class="text-lg font-bold text-slate-800">{{ $counts['manager'] ?? 0 }}</p>
             </div>
         </div>
         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
@@ -102,7 +102,7 @@
             </div>
             <div>
                 <p class="text-[11px] text-slate-500 font-medium">Admin Gudang</p>
-                <p class="text-lg font-bold text-slate-800">{{ $users->where('role', 'admin_gudang')->count() }}</p>
+                <p class="text-lg font-bold text-slate-800">{{ $counts['admin_gudang'] ?? 0 }}</p>
             </div>
         </div>
         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
@@ -111,7 +111,7 @@
             </div>
             <div>
                 <p class="text-[11px] text-slate-500 font-medium">Purchasing</p>
-                <p class="text-lg font-bold text-slate-800">{{ $users->where('role', 'purchasing')->count() }}</p>
+                <p class="text-lg font-bold text-slate-800">{{ $counts['purchasing'] ?? 0 }}</p>
             </div>
         </div>
         <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
@@ -120,7 +120,7 @@
             </div>
             <div>
                 <p class="text-[11px] text-slate-500 font-medium">Kasir</p>
-                <p class="text-lg font-bold text-slate-800">{{ $users->where('role', 'kasir')->count() }}</p>
+                <p class="text-lg font-bold text-slate-800">{{ $counts['kasir'] ?? 0 }}</p>
             </div>
         </div>
     </div>

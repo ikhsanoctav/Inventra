@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,19 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Google Material Symbols -->
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet" />
-
-    <script>
-        if (document.fonts) {
-            document.documentElement.classList.add('fonts-loading');
-            document.fonts.ready.then(function() {
-                document.documentElement.classList.remove('fonts-loading');
-            });
-            setTimeout(function() {
-                document.documentElement.classList.remove('fonts-loading');
-            }, 1200);
-        }
-    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet" />
 
     <style>
         body { font-family: 'Inter', sans-serif; }
@@ -42,19 +30,17 @@
 
         [x-cloak] { display: none !important; }
 
-        /* Prevent ligature text flash before Material Symbols font loads */
-        .fonts-loading .material-symbols-outlined {
-            visibility: hidden !important;
-        }
-
         .material-symbols-outlined {
             font-family: 'Material Symbols Outlined';
             font-weight: normal;
             font-style: normal;
+            font-size: 22px;
             line-height: 1;
             letter-spacing: normal;
             text-transform: none;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             white-space: nowrap;
             word-wrap: normal;
             direction: ltr;
@@ -62,29 +48,36 @@
             text-rendering: optimizeLegibility;
             font-feature-settings: 'liga';
             user-select: none;
+            width: 1em;
+            height: 1em;
+            overflow: hidden;
+            vertical-align: middle;
         }
-    </style>
-
-    <!-- NProgress CSS for HTMX Loading Bar -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.css" />
-    <style>
-        #nprogress .bar { background: #4F46E5 !important; height: 3px !important; }
-        #nprogress .peg { box-shadow: 0 0 10px #4F46E5, 0 0 5px #4F46E5 !important; }
-        #nprogress .spinner-icon { border-top-color: #4F46E5 !important; border-left-color: #4F46E5 !important; }
     </style>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased" x-data="{ sidebarOpen: window.innerWidth >= 1024 }" @resize.window="if (window.innerWidth >= 1024) { sidebarOpen = true; } else { sidebarOpen = false; }" hx-boost="true" hx-indicator="#global-indicator">
+<body class="bg-slate-50 text-slate-800 antialiased font-sans" 
+      x-data="{ 
+          sidebarOpen: localStorage.getItem('inventra_sidebar_open') !== null 
+              ? localStorage.getItem('inventra_sidebar_open') === 'true' 
+              : (window.innerWidth >= 1024),
+          toggleSidebar() {
+              this.sidebarOpen = !this.sidebarOpen;
+              localStorage.setItem('inventra_sidebar_open', this.sidebarOpen);
+          }
+      }" 
+      @resize.window="if (window.innerWidth < 1024 && sidebarOpen) { sidebarOpen = false; }">
     
-    <div class="flex h-screen overflow-hidden">
+    <div class="flex h-screen overflow-hidden bg-slate-50">
         
         <!-- Mobile Sidebar Overlay (Backdrop) -->
         <div x-show="sidebarOpen" 
-             x-transition:enter="transition-opacity ease-linear duration-300"
+             x-cloak
+             x-transition:enter="transition-opacity ease-linear duration-200"
              x-transition:enter-start="opacity-0"
              x-transition:enter-end="opacity-100"
-             x-transition:leave="transition-opacity ease-linear duration-300"
+             x-transition:leave="transition-opacity ease-linear duration-200"
              x-transition:leave-start="opacity-100"
              x-transition:leave-end="opacity-0"
              @click="sidebarOpen = false"
@@ -94,7 +87,7 @@
         @include('layouts.sidebar')
 
         <!-- Main Content Area -->
-        <div class="flex-1 flex flex-col h-screen overflow-hidden transition-all duration-300 relative" id="main-content-area">
+        <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden relative" id="main-content-area">
             
             <!-- Background Decoration (Glassmorphism effect underlying) -->
             <div class="absolute top-0 left-0 w-full h-64 bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-transparent -z-10 pointer-events-none"></div>
@@ -117,6 +110,7 @@
         <!-- Dynamic Toasts from Echo -->
         <template x-for="toast in toasts" :key="toast.id">
             <div x-show="toast.show" 
+                 x-cloak
                  x-transition:enter="transition ease-out duration-300 transform"
                  x-transition:enter-start="opacity-0 translate-x-8 scale-95"
                  x-transition:enter-end="opacity-100 translate-x-0 scale-100"
@@ -144,6 +138,7 @@
         <!-- Session Toasts -->
         @if(session('success'))
         <div x-data="{ show: true }" x-show="show" 
+             x-cloak
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="opacity-0 translate-x-8"
              x-transition:enter-end="opacity-100 translate-x-0"
@@ -165,6 +160,7 @@
 
         @if(session('error'))
         <div x-data="{ show: true }" x-show="show" 
+             x-cloak
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="opacity-0 translate-x-8"
              x-transition:enter-end="opacity-100 translate-x-0"
@@ -186,6 +182,7 @@
 
         @if($errors->any())
         <div x-data="{ show: true }" x-show="show" 
+             x-cloak
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="opacity-0 translate-x-8"
              x-transition:enter-end="opacity-100 translate-x-0"
@@ -210,22 +207,12 @@
         </div>
         @endif
     </div>
-        </div>
-    </div>
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
     
-    <!-- HTMX and NProgress -->
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.js"></script>
     <script>
-        document.addEventListener('htmx:configRequest', () => { NProgress.start(); });
-        document.addEventListener('htmx:afterOnLoad', () => { NProgress.done(); });
-        document.addEventListener('htmx:responseError', () => { NProgress.done(); });
-        document.addEventListener('htmx:sendError', () => { NProgress.done(); });
-
         document.addEventListener('alpine:init', () => {
             Alpine.data('toastManager', () => ({
                 toasts: [],

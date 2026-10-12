@@ -4,104 +4,157 @@
 
 @section('main_content')
 <div class="space-y-6" x-data="trendsDashboard()">
+    <!-- Header & Period Switcher -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-            <h2 class="font-headline text-2xl font-bold text-[#111827]">Tren Penjualan Historis</h2>
-            <p class="text-sm text-[#6B7280]">Analitik tren pergerakan penjualan dan proyeksi masa depan.</p>
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-indigo-600 text-[26px]">insights</span>
+                <h2 class="font-headline text-2xl font-bold text-slate-800">Tren Penjualan Historis</h2>
+            </div>
+            <p class="text-sm text-slate-500 mt-1">Analisis tren pergerakan penjualan barang dan proyeksi performa bisnis.</p>
         </div>
-        <div class="flex gap-3">
-            <select class="pl-4 pr-10 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 text-sm bg-white shadow-sm disabled:opacity-50" :disabled="isLoading">
-                <option>6 Bulan Terakhir</option>
-            </select>
+        
+        <!-- Period Switcher Pills (Harian / Mingguan / Bulanan) -->
+        <div class="flex items-center bg-slate-100 p-1.5 rounded-2xl border border-slate-200 text-xs font-bold self-start sm:self-auto shrink-0 shadow-inner">
+            <button type="button" 
+                    @click="setPeriod('harian')" 
+                    :class="activePeriod === 'harian' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'" 
+                    class="px-3.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-[16px]">today</span>
+                <span>Harian</span>
+            </button>
+            <button type="button" 
+                    @click="setPeriod('mingguan')" 
+                    :class="activePeriod === 'mingguan' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'" 
+                    class="px-3.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-[16px]">date_range</span>
+                <span>Mingguan</span>
+            </button>
+            <button type="button" 
+                    @click="setPeriod('bulanan')" 
+                    :class="activePeriod === 'bulanan' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'" 
+                    class="px-3.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-[16px]">calendar_month</span>
+                <span>Bulanan</span>
+            </button>
         </div>
     </div>
 
-    <!-- Metrics -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <!-- Dynamic Metrics -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
         <!-- Growth Metric -->
-        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex items-center justify-between relative overflow-hidden">
-            <!-- Skeleton -->
-            <div x-show="isLoading" class="absolute inset-0 bg-white z-10 p-6 flex items-center justify-between">
-                <div class="w-full">
-                    <div class="h-4 bg-slate-200 rounded w-1/2 mb-3 animate-pulse"></div>
-                    <div class="h-8 bg-slate-200 rounded w-3/4 animate-pulse"></div>
-                </div>
-                <div class="w-12 h-12 rounded-full bg-slate-100 animate-pulse shrink-0"></div>
-            </div>
-            <!-- Content -->
+        <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-sm flex items-center justify-between relative overflow-hidden transition-all hover:border-indigo-200 hover:shadow-md">
             <div>
-                <p class="text-sm font-medium text-slate-500 mb-1">Pertumbuhan Kuartal Ini</p>
-                <h4 class="text-2xl font-bold text-slate-800" x-text="'+' + growth + '%'"></h4>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1" x-text="currentPeriodData.growthLabel || 'Pertumbuhan'"></p>
+                <div class="flex items-baseline gap-2">
+                    <h4 class="text-2xl sm:text-3xl font-black text-slate-800 font-mono" x-text="(currentPeriodData.growth >= 0 ? '+' : '') + currentPeriodData.growth + '%'"></h4>
+                    <span class="text-xs font-semibold px-2 py-0.5 rounded-full" 
+                          :class="currentPeriodData.growth >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'" 
+                          x-text="currentPeriodData.growth >= 0 ? 'Meningkat' : 'Menurun'"></span>
+                </div>
             </div>
-            <div class="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                <span class="material-symbols-outlined">trending_up</span>
+            <div class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0" 
+                 :class="currentPeriodData.growth >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'">
+                <span class="material-symbols-outlined text-[24px]" x-text="currentPeriodData.growth >= 0 ? 'trending_up' : 'trending_down'"></span>
             </div>
         </div>
         
-        <!-- Avg Daily Metric -->
-        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex items-center justify-between relative overflow-hidden">
-            <!-- Skeleton -->
-            <div x-show="isLoading" class="absolute inset-0 bg-white z-10 p-6 flex items-center justify-between">
-                <div class="w-full">
-                    <div class="h-4 bg-slate-200 rounded w-1/2 mb-3 animate-pulse"></div>
-                    <div class="h-8 bg-slate-200 rounded w-3/4 animate-pulse"></div>
-                </div>
-                <div class="w-12 h-12 rounded-full bg-slate-100 animate-pulse shrink-0"></div>
-            </div>
-            <!-- Content -->
+        <!-- Avg Daily / Transaction Metric -->
+        <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-sm flex items-center justify-between relative overflow-hidden transition-all hover:border-indigo-200 hover:shadow-md">
             <div>
-                <p class="text-sm font-medium text-slate-500 mb-1">Rata-rata Transaksi Harian</p>
-                <h4 class="text-2xl font-bold text-slate-800" x-text="avgDaily"></h4>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1" x-text="currentPeriodData.avgLabel || 'Rata-rata Transaksi'"></p>
+                <h4 class="text-2xl sm:text-3xl font-black text-slate-800 font-mono" x-text="currentPeriodData.avgDaily"></h4>
             </div>
-            <div class="w-12 h-12 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-                <span class="material-symbols-outlined">analytics</span>
+            <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-[24px]">analytics</span>
             </div>
         </div>
         
         <!-- Top Product Metric -->
-        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex items-center justify-between relative overflow-hidden">
-            <!-- Skeleton -->
-            <div x-show="isLoading" class="absolute inset-0 bg-white z-10 p-6 flex items-center justify-between">
-                <div class="w-full">
-                    <div class="h-4 bg-slate-200 rounded w-1/2 mb-3 animate-pulse"></div>
-                    <div class="h-8 bg-slate-200 rounded w-3/4 animate-pulse"></div>
-                </div>
-                <div class="w-12 h-12 rounded-full bg-slate-100 animate-pulse shrink-0"></div>
+        <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-sm flex items-center justify-between relative overflow-hidden transition-all hover:border-indigo-200 hover:shadow-md">
+            <div class="max-w-[70%]">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1" x-text="currentPeriodData.topProductLabel || 'Produk Terlaris'"></p>
+                <h4 class="text-base sm:text-lg font-bold text-slate-800 truncate" :title="currentPeriodData.topProduct" x-text="currentPeriodData.topProduct"></h4>
+                <p class="text-xs text-indigo-600 font-semibold mt-0.5">Kontribusi Penjualan Tertinggi</p>
             </div>
-            <!-- Content -->
-            <div>
-                <p class="text-sm font-medium text-slate-500 mb-1">Produk Terlaris</p>
-                <h4 class="text-2xl font-bold text-slate-800" x-text="topProduct"></h4>
-            </div>
-            <div class="w-12 h-12 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-                <span class="material-symbols-outlined">star</span>
+            <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-[24px]">star</span>
             </div>
         </div>
     </div>
 
-    <!-- Chart -->
-    <div class="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-8 relative overflow-hidden">
-        
-        <!-- Skeleton -->
-        <div x-show="isLoading" class="absolute inset-0 bg-white z-10 p-8 flex flex-col">
-            <div class="h-6 bg-slate-200 rounded w-1/3 mb-8 animate-pulse"></div>
-            <!-- Mock Chart Bars for skeleton -->
-            <div class="flex-1 flex items-end justify-between gap-4 pt-4">
-                <div class="w-full bg-slate-100 h-1/3 rounded-t-lg animate-pulse"></div>
-                <div class="w-full bg-slate-100 h-1/2 rounded-t-lg animate-pulse" style="animation-delay: 100ms"></div>
-                <div class="w-full bg-slate-100 h-2/5 rounded-t-lg animate-pulse" style="animation-delay: 200ms"></div>
-                <div class="w-full bg-slate-100 h-3/5 rounded-t-lg animate-pulse" style="animation-delay: 300ms"></div>
-                <div class="w-full bg-slate-100 h-4/5 rounded-t-lg animate-pulse" style="animation-delay: 400ms"></div>
-                <div class="w-full bg-slate-100 h-full rounded-t-lg animate-pulse" style="animation-delay: 500ms"></div>
+    <!-- Chart Card -->
+    <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm p-6 sm:p-8 space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+            <div>
+                <h3 class="text-lg font-bold text-slate-800 font-headline flex items-center gap-2" x-text="currentPeriodData.title || 'Grafik Tren Penjualan'">
+                    <span class="material-symbols-outlined text-indigo-600">show_chart</span>
+                    Grafik Penjualan
+                </h3>
+                <p class="text-xs text-slate-500 mt-0.5">Nilai transaksi penjualan dalam satuan Juta Rupiah (Rp).</p>
+            </div>
+
+            <!-- Legend Badge -->
+            <div class="flex items-center gap-2 text-xs font-semibold text-slate-600 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100 self-start sm:self-auto">
+                <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+                <span>Nilai Penjualan (Juta Rp)</span>
             </div>
         </div>
-        
-        <!-- Content -->
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="text-lg font-bold text-slate-800 font-headline">Grafik Penjualan 6 Bulan Terakhir</h3>
-        </div>
+
         <div class="h-80 w-full relative">
             <canvas id="trendsChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Data Breakdown Table -->
+    <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
+        <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+            <div>
+                <h3 class="font-bold text-slate-800 font-headline flex items-center gap-2">
+                    <span class="material-symbols-outlined text-indigo-600 text-[20px]">table_chart</span>
+                    Rincian Pergerakan Penjualan
+                </h3>
+                <p class="text-xs text-slate-500 mt-0.5">Tabel distribusi nominal transaksi berdasarkan interval waktu yang dipilih.</p>
+            </div>
+            <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase" x-text="activePeriod"></span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-slate-600">
+                <thead class="bg-slate-50/80 text-xs uppercase text-slate-400 font-bold border-b border-slate-100">
+                    <tr>
+                        <th class="px-6 py-3.5">Interval Waktu</th>
+                        <th class="px-6 py-3.5 text-right">Nominal Penjualan</th>
+                        <th class="px-6 py-3.5 text-right">Nilai dalam Juta</th>
+                        <th class="px-6 py-3.5 text-center">Status Aktivitas</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                    <template x-for="(label, idx) in currentPeriodData.labels" :key="label + '-' + idx">
+                        <tr class="hover:bg-slate-50/60 transition-colors">
+                            <td class="px-6 py-3.5 font-bold text-slate-800 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full" :class="(currentPeriodData.data[idx] > 0) ? 'bg-indigo-600' : 'bg-slate-300'"></span>
+                                <span x-text="label"></span>
+                            </td>
+                            <td class="px-6 py-3.5 text-right font-mono font-bold text-slate-800" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(currentPeriodData.raw_data ? currentPeriodData.raw_data[idx] : (currentPeriodData.data[idx] * 1000000))"></td>
+                            <td class="px-6 py-3.5 text-right font-mono text-indigo-600 font-bold" x-text="currentPeriodData.data[idx] + ' Jt'"></td>
+                            <td class="px-6 py-3.5 text-center">
+                                <template x-if="currentPeriodData.data[idx] > 0">
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                        Ada Transaksi
+                                    </span>
+                                </template>
+                                <template x-if="currentPeriodData.data[idx] <= 0">
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-400">
+                                        Nihil
+                                    </span>
+                                </template>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -110,52 +163,53 @@
 <script>
     document.addEventListener('alpine:init', () => {
         Alpine.data('trendsDashboard', () => ({
-            isLoading: true,
-            growth: 0,
-            avgDaily: 0,
-            topProduct: '-',
+            activePeriod: 'bulanan',
+            allData: @json($trendData ?? []),
+            currentPeriodData: {},
             chartInstance: null,
 
-            async init() {
-                // Simulate a slight delay so user can see the skeleton loader (optional, for effect)
-                await new Promise(r => setTimeout(r, 800));
-                await this.fetchData();
-            },
-
-            async fetchData() {
-                try {
-                    const response = await fetch("{{ route('manager.trends') }}", {
-                        headers: {
-                            'Accept': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    });
-                    
-                    if (response.ok) {
-                        const data = await response.json();
-                        this.growth = data.growth;
-                        this.avgDaily = data.avgDaily;
-                        this.topProduct = data.topProduct;
-                        
-                        this.renderChart(data.labels, data.data);
-                    }
-                } catch (error) {
-                    console.error('Failed to fetch trend data:', error);
-                } finally {
-                    this.isLoading = false;
+            init() {
+                // Ensure data is structured properly
+                if (!this.allData || !this.allData.bulanan) {
+                    this.allData = {
+                        harian: { labels: [], data: [], raw_data: [], growth: 0, growthLabel: 'Pertumbuhan', avgDaily: 'Rp 0', avgLabel: 'Total Penjualan', topProduct: '-', topProductLabel: 'Produk Terlaris', title: 'Grafik Penjualan Hari Ini' },
+                        mingguan: { labels: [], data: [], raw_data: [], growth: 0, growthLabel: 'Pertumbuhan', avgDaily: 'Rp 0', avgLabel: 'Rata-rata Penjualan', topProduct: '-', topProductLabel: 'Produk Terlaris', title: 'Grafik Penjualan 7 Hari Terakhir' },
+                        bulanan: { labels: [], data: [], raw_data: [], growth: 0, growthLabel: 'Pertumbuhan', avgDaily: 'Rp 0', avgLabel: 'Rata-rata Transaksi', topProduct: '-', topProductLabel: 'Produk Terlaris', title: 'Grafik Penjualan 6 Bulan Terakhir' }
+                    };
                 }
+
+                this.setPeriod('bulanan');
+
+                // Lifecycle hooks
+                document.addEventListener('htmx:afterOnLoad', () => {
+                    this.renderChart();
+                });
             },
 
-            renderChart(labels, data) {
-                const ctx = document.getElementById('trendsChart').getContext('2d');
+            setPeriod(period) {
+                this.activePeriod = period;
+                this.currentPeriodData = this.allData[period] || {};
+                this.$nextTick(() => {
+                    this.renderChart();
+                });
+            },
+
+            renderChart() {
+                const canvas = document.getElementById('trendsChart');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
                 
                 if (this.chartInstance) {
                     this.chartInstance.destroy();
+                    this.chartInstance = null;
                 }
 
-                let gradient = ctx.createLinearGradient(0, 0, 0, 400);
-                gradient.addColorStop(0, 'rgba(79, 70, 229, 0.5)'); // Indigo 600
-                gradient.addColorStop(1, 'rgba(79, 70, 229, 0)');
+                const labels = this.currentPeriodData.labels || [];
+                const data = this.currentPeriodData.data || [];
+
+                let gradient = ctx.createLinearGradient(0, 0, 0, 320);
+                gradient.addColorStop(0, 'rgba(79, 70, 229, 0.45)');
+                gradient.addColorStop(1, 'rgba(79, 70, 229, 0.01)');
                 
                 this.chartInstance = new Chart(ctx, {
                     type: 'line',
@@ -169,16 +223,23 @@
                             borderWidth: 3,
                             pointBackgroundColor: '#ffffff',
                             pointBorderColor: '#4f46e5',
-                            pointBorderWidth: 2,
+                            pointBorderWidth: 2.5,
                             pointRadius: 5,
                             pointHoverRadius: 7,
+                            pointHoverBackgroundColor: '#4f46e5',
+                            pointHoverBorderColor: '#ffffff',
+                            pointHoverBorderWidth: 2,
                             fill: true,
-                            tension: 0.4
+                            tension: 0.35
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        animation: {
+                            duration: 500,
+                            easing: 'easeOutQuart'
+                        },
                         plugins: {
                             legend: {
                                 display: false
@@ -186,12 +247,14 @@
                             tooltip: {
                                 backgroundColor: '#1e293b',
                                 padding: 12,
-                                titleFont: { size: 14, family: "'Outfit', sans-serif" },
+                                cornerRadius: 10,
+                                titleFont: { size: 13, weight: 'bold', family: "'Outfit', sans-serif" },
                                 bodyFont: { size: 13, family: "'Outfit', sans-serif" },
                                 displayColors: false,
                                 callbacks: {
                                     label: function(context) {
-                                        return 'Rp ' + context.parsed.y + ' Juta';
+                                        const rawVal = context.parsed.y;
+                                        return 'Rp ' + rawVal + ' Juta (Rp ' + new Intl.NumberFormat('id-ID').format(Math.round(rawVal * 1000000)) + ')';
                                     }
                                 }
                             }
@@ -200,12 +263,15 @@
                             y: {
                                 beginAtZero: true,
                                 grid: {
-                                    color: '#f1f5f9',
+                                    color: 'rgba(241, 245, 249, 0.9)',
                                     drawBorder: false,
                                 },
                                 ticks: {
                                     color: '#64748b',
-                                    font: { family: "'Outfit', sans-serif" }
+                                    font: { family: "'Outfit', sans-serif", size: 11 },
+                                    callback: function(value) {
+                                        return value + ' Jt';
+                                    }
                                 }
                             },
                             x: {
@@ -215,7 +281,7 @@
                                 },
                                 ticks: {
                                     color: '#64748b',
-                                    font: { family: "'Outfit', sans-serif" }
+                                    font: { family: "'Outfit', sans-serif", size: 11 }
                                 }
                             }
                         },

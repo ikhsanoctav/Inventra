@@ -24,23 +24,23 @@ class DummyDataSeeder extends Seeder
         );
 
         // 2. Create Default Users (Roles: super_admin, kasir, manager, admin_gudang, purchasing)
-        $roles = [
-            'super_admin' => 'Super Admin',
-            'kasir' => 'Kasir',
-            'manager' => 'Manager',
-            'admin_gudang' => 'Admin Gudang',
-            'purchasing' => 'Purchasing',
+        $users = [
+            ['nip' => '10000001', 'email' => 'superadmin@inventra.go.id', 'name' => 'Super Admin', 'role' => 'super_admin'],
+            ['nip' => '10000002', 'email' => 'manager@inventra.go.id', 'name' => 'Manager', 'role' => 'manager'],
+            ['nip' => '10000003', 'email' => 'kasir@inventra.go.id', 'name' => 'Kasir', 'role' => 'kasir'],
+            ['nip' => '10000004', 'email' => 'gudang@inventra.go.id', 'name' => 'Admin Gudang', 'role' => 'admin_gudang'],
+            ['nip' => '10000005', 'email' => 'purchasing@inventra.go.id', 'name' => 'Purchasing', 'role' => 'purchasing'],
         ];
 
-        $index = 10000001;
-        foreach ($roles as $role => $name) {
+        foreach ($users as $u) {
             User::updateOrCreate(
-                ['email' => $role.'@inventra.go.id'],
+                ['nip' => $u['nip']],
                 [
-                    'nip' => (string) $index++,
-                    'name' => $name,
+                    'email' => $u['email'],
+                    'name' => $u['name'],
                     'password' => Hash::make('password'),
-                    'role' => $role,
+                    'role' => $u['role'],
+                    'is_active' => true,
                 ]
             );
         }
@@ -348,13 +348,24 @@ class DummyDataSeeder extends Seeder
         }
 
         // 7. Generate Dummy Transactions (Inbound & Outbound) for Chart Visualization
-        $itemLaptop = Item::where('sku', 'SKU-IT-0082')->first();
-        $itemMasker = Item::where('sku', 'SKU-MED-0031')->first();
+        $itemLaptop = Item::where('sku', 'SKU-IT-0082')->first() ?? Item::first();
+        $itemMasker = Item::where('sku', 'SKU-MED-0031')->first() ?? Item::first();
+        $itemKertas = Item::where('sku', 'SKU-ATK-0194')->first() ?? Item::first();
+        $itemMouse = Item::where('sku', 'SKU-IT-0301')->first() ?? Item::first();
         $admin = User::where('role', 'admin_gudang')->first();
         $kasir = User::where('role', 'kasir')->first();
 
-        // Inbound Transactions (3 days ago, 7 days ago, 15 days ago)
-        $inboundDates = [now()->subDays(3), now()->subDays(7), now()->subDays(15)];
+        // Inbound Transactions (3 days ago, 7 days ago, 15 days ago, 30 days ago)
+        $inboundDates = [
+            now()->subDays(3),
+            now()->subDays(7),
+            now()->subDays(15),
+            now()->subDays(30),
+            now()->subMonths(2),
+            now()->subMonths(3),
+            now()->subMonths(4),
+            now()->subMonths(5),
+        ];
         foreach ($inboundDates as $index => $date) {
             $trx = Transaction::firstOrCreate(
                 ['ref_number' => 'INB-DUMMY-'.$index],
@@ -364,7 +375,9 @@ class DummyDataSeeder extends Seeder
                     'type' => 'Inbound',
                     'transaction_date' => $date,
                     'status' => 'Completed',
-                    'total_amount' => 12500000 * 2, // Dummy value
+                    'total_amount' => 12500000 * 2,
+                    'created_at' => $date,
+                    'updated_at' => $date,
                 ]
             );
 
@@ -374,24 +387,86 @@ class DummyDataSeeder extends Seeder
             );
         }
 
-        // Outbound Transactions (1 day ago, 2 days ago, 5 days ago, 12 days ago)
-        $outboundDates = [now()->subDays(1), now()->subDays(2), now()->subDays(5), now()->subDays(12)];
-        foreach ($outboundDates as $index => $date) {
+        // Outbound / Sales Transactions:
+        // A. Today (Hourly spread)
+        $todayTrxs = [
+            ['hour' => 9, 'item' => $itemMasker, 'qty' => 20, 'price' => 25000],
+            ['hour' => 11, 'item' => $itemKertas, 'qty' => 15, 'price' => 55000],
+            ['hour' => 14, 'item' => $itemMouse, 'qty' => 10, 'price' => 120000],
+            ['hour' => 16, 'item' => $itemMasker, 'qty' => 40, 'price' => 25000],
+        ];
+        foreach ($todayTrxs as $idx => $t) {
+            $date = now()->setTime($t['hour'], 30, 0);
+            $total = $t['qty'] * $t['price'];
             $trx = Transaction::firstOrCreate(
-                ['ref_number' => 'OUT-DUMMY-'.$index],
+                ['ref_number' => 'OUT-TODAY-'.$idx],
                 [
                     'tenant_id' => $tenant->id,
                     'user_id' => $kasir->id ?? 1,
                     'type' => 'Outbound',
-                    'transaction_date' => $date,
+                    'transaction_date' => $date->toDateString(),
                     'status' => 'Completed',
-                    'total_amount' => 25000 * 10, // Dummy value
+                    'total_amount' => $total,
+                    'created_at' => $date,
+                    'updated_at' => $date,
                 ]
             );
+            TransactionLine::firstOrCreate(
+                ['transaction_id' => $trx->id, 'item_id' => $t['item']->id],
+                ['quantity' => $t['qty'], 'unit_price' => $t['price']]
+            );
+        }
 
+        // B. Past 7 Days
+        for ($i = 1; $i <= 6; $i++) {
+            $date = now()->subDays($i)->setTime(13, 0, 0);
+            $qty = 25 + ($i * 10);
+            $total = $qty * 25000 + ($i * 150000);
+            $trx = Transaction::firstOrCreate(
+                ['ref_number' => 'OUT-DAY-'.$i],
+                [
+                    'tenant_id' => $tenant->id,
+                    'user_id' => $kasir->id ?? 1,
+                    'type' => 'Outbound',
+                    'transaction_date' => $date->toDateString(),
+                    'status' => 'Completed',
+                    'total_amount' => $total,
+                    'created_at' => $date,
+                    'updated_at' => $date,
+                ]
+            );
             TransactionLine::firstOrCreate(
                 ['transaction_id' => $trx->id, 'item_id' => $itemMasker->id],
-                ['quantity' => 10, 'unit_price' => 25000]
+                ['quantity' => $qty, 'unit_price' => 25000]
+            );
+        }
+
+        // C. Past Months (1 to 5 months ago)
+        $pastMonths = [
+            ['sub' => 1, 'amount' => 18500000, 'qty' => 250],
+            ['sub' => 2, 'amount' => 24200000, 'qty' => 320],
+            ['sub' => 3, 'amount' => 15800000, 'qty' => 210],
+            ['sub' => 4, 'amount' => 29400000, 'qty' => 400],
+            ['sub' => 5, 'amount' => 12600000, 'qty' => 180],
+        ];
+        foreach ($pastMonths as $m) {
+            $date = now()->subMonths($m['sub'])->setDay(15)->setTime(10, 0, 0);
+            $trx = Transaction::firstOrCreate(
+                ['ref_number' => 'OUT-MONTH-'.$m['sub']],
+                [
+                    'tenant_id' => $tenant->id,
+                    'user_id' => $kasir->id ?? 1,
+                    'type' => 'Outbound',
+                    'transaction_date' => $date->toDateString(),
+                    'status' => 'Completed',
+                    'total_amount' => $m['amount'],
+                    'created_at' => $date,
+                    'updated_at' => $date,
+                ]
+            );
+            TransactionLine::firstOrCreate(
+                ['transaction_id' => $trx->id, 'item_id' => $itemMasker->id],
+                ['quantity' => $m['qty'], 'unit_price' => 25000]
             );
         }
 

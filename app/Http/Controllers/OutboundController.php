@@ -2,15 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\StockUpdated;
 use App\Models\AuditLog;
 use App\Models\Item;
 use App\Models\Outlet;
+use App\Models\Setting;
 use App\Models\Transaction;
 use App\Models\TransactionLine;
 use App\Models\User;
+use App\Notifications\LowStockNotification;
 use App\Notifications\OutboundCompletedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class OutboundController extends Controller
 {
@@ -120,26 +124,52 @@ class OutboundController extends Controller
             return redirect()->back()->with('error', 'Transaksi sudah berstatus Selesai.');
         }
 
+        $completed = false;
         try {
-            DB::transaction(function () use ($transaction) {
-                foreach ($transaction->lines as $line) {
+            DB::transaction(function () use ($transaction, &$completed) {
+                $lockedTrx = Transaction::lockForUpdate()->findOrFail($transaction->id);
+                if ($lockedTrx->status === 'Completed') {
+                    return;
+                }
+
+                foreach ($lockedTrx->lines as $line) {
                     $item = Item::lockForUpdate()->find($line->item_id);
                     if ($item && $item->type === 'barang') {
                         if ($item->stock < $line->quantity) {
                             throw new \Exception('Stok item '.$item->name.' tidak mencukupi untuk diproses.');
                         }
                         $item->decrement('stock', $line->quantity);
+
+                        // Trigger low stock notification if below threshold
+                        $minStock = $item->min_stock ?? (int) Setting::get('min_stock_alert_threshold', 10);
+                        if ($item->stock <= $minStock) {
+                            $alertUsers = User::whereIn('role', ['super_admin', 'manager', 'admin_gudang', 'purchasing'])->get();
+                            foreach ($alertUsers as $alertUser) {
+                                $alertUser->notify(new LowStockNotification($item, $item->stock));
+                            }
+                        }
                     }
                 }
-                $transaction->update(['status' => 'Completed']);
+                $lockedTrx->update(['status' => 'Completed']);
 
-                AuditLog::record('OUTBOUND_COMPLETED', 'Transaction', $transaction->id, null, [
-                    'ref_number' => $transaction->ref_number,
-                    'lines_count' => $transaction->lines->count(),
+                AuditLog::record('OUTBOUND_COMPLETED', 'Transaction', $lockedTrx->id, null, [
+                    'ref_number' => $lockedTrx->ref_number,
+                    'lines_count' => $lockedTrx->lines->count(),
                 ]);
+                $completed = true;
             });
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
+        }
+
+        if (! $completed) {
+            return redirect()->back()->with('error', 'Transaksi sudah berstatus Selesai sebelumnya.');
+        }
+
+        try {
+            event(new StockUpdated("Pengeluaran barang (Outbound) {$transaction->ref_number} selesai. Stok telah dikurangi."));
+        } catch (\Throwable $e) {
+            Log::warning('StockUpdated event broadcast error: '.$e->getMessage());
         }
 
         // Notify roles

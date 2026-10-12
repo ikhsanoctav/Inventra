@@ -1,13 +1,13 @@
 <!-- Topbar -->
 <header class="h-16 bg-white/95 backdrop-blur-md border-b border-[#E5E7EB] px-4 sm:px-6 flex items-center justify-between sticky top-0 z-40 shrink-0" style="z-index: 40;">
     <div class="flex items-center gap-4">
-        <button @click="sidebarOpen = !sidebarOpen" class="text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 p-2 rounded-lg transition-colors flex items-center justify-center">
+        <button @click="toggleSidebar()" type="button" class="text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 p-2 rounded-lg transition-colors flex items-center justify-center cursor-pointer" title="Toggle Menu">
             <span class="material-symbols-outlined text-[22px]">menu</span>
         </button>
         
         <!-- Breadcrumbs placeholder -->
         <nav class="hidden sm:flex items-center gap-2 text-sm text-slate-500">
-            <a href="javascript:void(0)" class="hover:text-indigo-600 transition-colors"><span class="material-symbols-outlined text-[18px]">home</span></a>
+            <a href="{{ route('dashboard') }}" class="hover:text-indigo-600 transition-colors flex items-center" title="Dashboard"><span class="material-symbols-outlined text-[18px]">home</span></a>
             <span class="material-symbols-outlined text-[16px]">chevron_right</span>
             <span class="font-medium text-slate-700">@yield('header_title', 'Dashboard')</span>
         </nav>

@@ -3,13 +3,28 @@
 @section('body_class', 'antialiased min-h-screen overflow-hidden selection:bg-indigo-500 selection:text-white font-body relative')
 
 @section('content')
-<!-- Animated Mesh Gradient Background -->
+@php
+    $loginBg = \App\Models\Setting::get('login_bg');
+@endphp
+
+@if($loginBg)
+<!-- Custom Background Image with Sleek Glassmorphic Overlay -->
+<div class="absolute inset-0 -z-10 h-full w-full overflow-hidden">
+    <img src="{{ Storage::url($loginBg) }}" alt="Login Background" class="w-full h-full object-cover object-center filter brightness-95">
+    <!-- Premium Backdrop Overlay for contrast & readability -->
+    <div class="absolute inset-0 bg-slate-900/35 backdrop-blur-[2px]"></div>
+    <div class="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-900/20 to-slate-950/40"></div>
+    <div class="absolute inset-0 bg-[radial-gradient(#ffffff_1px,transparent_1px)] bg-[size:32px_32px] opacity-[0.06]"></div>
+</div>
+@else
+<!-- Animated Mesh Gradient Background (Default) -->
 <div class="absolute inset-0 -z-10 h-full w-full bg-slate-50 overflow-hidden">
     <div class="absolute -top-[10%] -left-[10%] w-[50%] h-[50%] bg-indigo-200/80 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob"></div>
     <div class="absolute top-[10%] -right-[10%] w-[50%] h-[50%] bg-blue-200/80 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000"></div>
     <div class="absolute -bottom-[10%] left-[20%] w-[50%] h-[50%] bg-sky-200/80 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-4000"></div>
     <div class="absolute inset-0 bg-[radial-gradient(#94a3b8_1px,transparent_1px)] bg-[size:32px_32px] opacity-[0.15]"></div>
 </div>
+@endif
 
 <div class="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 lg:p-8">
     
@@ -141,38 +156,6 @@
                     <span id="btnText">Masuk ke Sistem</span>
                 </button>
             </form>
-
-            <!-- Demo Accounts -->
-            <div class="mt-8">
-                <div class="relative">
-                    <div class="absolute inset-0 flex items-center">
-                        <div class="w-full border-t border-slate-200"></div>
-                    </div>
-                    <div class="relative flex justify-center text-xs">
-                        <span class="bg-slate-50 px-2 text-slate-500">Akses Cepat (Demo)</span>
-                    </div>
-                </div>
-                
-                <div class="mt-6 grid grid-cols-2 gap-3">
-                    <button type="button" onclick="fillDemo('admin@inventra.go.id')" class="flex flex-col items-center justify-center gap-1 p-3 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 hover:border-indigo-300 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1">
-                        <span class="material-symbols-outlined text-indigo-500 text-[20px]">admin_panel_settings</span>
-                        <span class="text-xs font-semibold text-slate-700">Super Admin</span>
-                    </button>
-                    <button type="button" onclick="fillDemo('manager@inventra.go.id')" class="flex flex-col items-center justify-center gap-1 p-3 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 hover:border-indigo-300 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1">
-                        <span class="material-symbols-outlined text-purple-500 text-[20px]">monitoring</span>
-                        <span class="text-xs font-semibold text-slate-700">Manager</span>
-                    </button>
-                    <button type="button" onclick="fillDemo('gudang@inventra.go.id')" class="flex flex-col items-center justify-center gap-1 p-3 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 hover:border-indigo-300 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1">
-                        <span class="material-symbols-outlined text-emerald-500 text-[20px]">inventory_2</span>
-                        <span class="text-xs font-semibold text-slate-700">Admin Gudang</span>
-                    </button>
-                    <button type="button" onclick="fillDemo('kasir@inventra.go.id')" class="flex flex-col items-center justify-center gap-1 p-3 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 hover:border-indigo-300 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1">
-                        <span class="material-symbols-outlined text-sky-500 text-[20px]">point_of_sale</span>
-                        <span class="text-xs font-semibold text-slate-700">Kasir POS</span>
-                    </button>
-                </div>
-            </div>
-
         </div>
     </div>
 </div>
@@ -208,11 +191,6 @@
             input.type = 'password';
             icon.textContent = 'visibility';
         }
-    }
-
-    function fillDemo(email) {
-        document.getElementById('email').value = email;
-        document.getElementById('password').value = 'password';
     }
 
     document.getElementById('loginForm').addEventListener('submit', function() {

@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BarcodePrintController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\DamagedItemController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeliveryNoteController;
 use App\Http\Controllers\GudangRequestController;
@@ -22,6 +24,7 @@ use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\StockOpnameController;
 use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\SystemBackupController;
 use App\Http\Controllers\SystemSettingController;
 use App\Http\Controllers\TransactionHistoryController;
 use App\Http\Controllers\TransferController;
@@ -57,6 +60,7 @@ Route::middleware('auth')->group(function () {
     // Master Data
     Route::middleware('role:manager,admin_gudang,purchasing,super_admin')->group(function () {
         Route::get('/master/items', [ItemController::class, 'index'])->name('master.items');
+        Route::get('/master/items/generate-sku', [ItemController::class, 'generateSku'])->name('master.items.generate_sku');
         Route::post('/master/items', [ItemController::class, 'store']);
         Route::put('/master/items/{id}', [ItemController::class, 'update'])->name('master.items.update');
         Route::delete('/master/items/{id}', [ItemController::class, 'destroy'])->name('master.items.destroy');
@@ -109,10 +113,15 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:manager,purchasing,super_admin')->group(function () {
         Route::get('/transactions/po', [PurchaseOrderController::class, 'index'])->name('transactions.po.index');
         Route::post('/transactions/po', [PurchaseOrderController::class, 'store'])->name('transactions.po');
+        Route::post('/transactions/po/quick-draft', [PurchaseOrderController::class, 'quickDraft'])->name('transactions.po.quick_draft');
+        Route::post('/transactions/po/bulk-auto-draft', [PurchaseOrderController::class, 'bulkAutoDraft'])->name('transactions.po.bulk_auto_draft');
         Route::get('/transactions/po/{id}', [PurchaseOrderController::class, 'show'])->name('transactions.po.show');
+        Route::post('/transactions/po/{id}/submit', [PurchaseOrderController::class, 'submitForApproval'])->name('transactions.po.submit');
         Route::post('/transactions/po/{id}/approve', [PurchaseOrderController::class, 'approve'])->name('transactions.po.approve');
+        Route::post('/transactions/po/{id}/reject', [PurchaseOrderController::class, 'reject'])->name('transactions.po.reject');
         Route::delete('/transactions/po/{id}', [PurchaseOrderController::class, 'destroy'])->name('transactions.po.destroy');
         Route::post('/transactions/po/{id}/lines', [PurchaseOrderController::class, 'addLine'])->name('transactions.po.addLine');
+        Route::put('/transactions/po/lines/{id}', [PurchaseOrderController::class, 'updateLine'])->name('transactions.po.update_line');
         Route::delete('/transactions/po/lines/{id}', [PurchaseOrderController::class, 'destroyLine'])->name('transactions.po.lines.destroy');
     });
 
@@ -155,13 +164,23 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/system/audit', [AuditLogController::class, 'index'])->name('system.audit');
         Route::post('/system/audit', [AuditLogController::class, 'store']);
+
+        // Database Backup & Maintenance Center
+        Route::get('/system/backup', [SystemBackupController::class, 'index'])->name('system.backup');
+        Route::match(['get', 'post'], '/system/backup/create', [SystemBackupController::class, 'create'])->name('system.backup.create');
+        Route::get('/system/backup/download/{filename}', [SystemBackupController::class, 'download'])->name('system.backup.download');
+        Route::post('/system/backup/restore/{filename}', [SystemBackupController::class, 'restore'])->name('system.backup.restore');
+        Route::post('/system/backup/upload-restore', [SystemBackupController::class, 'uploadRestore'])->name('system.backup.upload_restore');
+        Route::delete('/system/backup/{filename}', [SystemBackupController::class, 'destroy'])->name('system.backup.destroy');
+        Route::post('/system/backup/clear-cache', [SystemBackupController::class, 'clearCache'])->name('system.backup.clear_cache');
+        Route::post('/system/backup/optimize', [SystemBackupController::class, 'optimize'])->name('system.backup.optimize');
     });
 
     // POS - Kasir Only
     Route::middleware('role:kasir,super_admin')->group(function () {
         Route::get('/pos', [PosController::class, 'index'])->name('pos.index');
         Route::get('/pos/items', [PosController::class, 'items'])->name('pos.items');
-        Route::post('/pos/checkout', [PosController::class, 'checkout'])->name('pos.checkout');
+        Route::post('/pos/checkout', [PosController::class, 'checkout'])->middleware('idempotent')->name('pos.checkout');
         Route::get('/pos/receipt/{ref}', [PosController::class, 'receipt'])->name('pos.receipt');
     });
 
@@ -211,6 +230,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/manager/audit/opname', [ManagerApprovalController::class, 'auditOpname'])->name('manager.audit.opname');
         Route::get('/manager/approvals', [ManagerApprovalController::class, 'index'])->name('manager.approvals');
         Route::get('/manager/trends', [ReportController::class, 'trends'])->name('manager.trends');
+        Route::post('/gudang/requests/{id}/approve', [GudangRequestController::class, 'approve'])->name('gudang.requests.approve');
+        Route::post('/gudang/requests/{id}/reject', [GudangRequestController::class, 'reject'])->name('gudang.requests.reject');
     });
 
     // Gudang
@@ -219,6 +240,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/gudang/requests', [GudangRequestController::class, 'store'])->name('gudang.requests.store');
         Route::get('/gudang/delivery-note', [DeliveryNoteController::class, 'index'])->name('gudang.delivery_note');
         Route::get('/gudang/delivery-note/{id}/print', [DeliveryNoteController::class, 'print'])->name('gudang.delivery_note.print');
+        Route::get('/gudang/damaged-items', [DamagedItemController::class, 'index'])->name('gudang.damaged_items.index');
+        Route::post('/gudang/damaged-items', [DamagedItemController::class, 'store'])->name('gudang.damaged_items.store');
+        Route::post('/gudang/damaged-items/{id}/status', [DamagedItemController::class, 'updateStatus'])->name('gudang.damaged_items.status');
+        Route::get('/gudang/barcode', [BarcodePrintController::class, 'index'])->name('gudang.barcode.index');
+        Route::post('/gudang/barcode/print', [BarcodePrintController::class, 'print'])->name('gudang.barcode.print');
     });
 
     // Purchasing
@@ -237,6 +263,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/pos/shifts', [PosController::class, 'shifts'])->name('pos.shifts');
         Route::post('/pos/shifts/open', [PosController::class, 'openShift'])->name('pos.shifts.open');
         Route::post('/pos/shifts/close', [PosController::class, 'closeShift'])->name('pos.shifts.close');
+        Route::get('/pos/shifts/{id}/receipt', [PosController::class, 'shiftReceipt'])->name('pos.shifts.receipt');
+        Route::get('/pos/shifts/{id}/transactions', [PosController::class, 'shiftTransactions'])->name('pos.shifts.transactions');
         Route::get('/pos/returns', [PosController::class, 'returns'])->name('pos.returns');
         Route::post('/pos/returns/{id}', [PosController::class, 'processReturn'])->name('pos.returns.process');
     });

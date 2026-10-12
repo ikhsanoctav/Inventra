@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\StockUpdated;
 use App\Models\Item;
+use App\Models\Setting;
 use App\Models\Transaction;
 use App\Models\TransactionLine;
 use App\Models\User;
+use App\Notifications\LowStockNotification;
 use App\Notifications\StockOpnameCompletedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class StockOpnameController extends Controller
 {
@@ -136,10 +140,25 @@ class StockOpnameController extends Controller
                 $item = Item::lockForUpdate()->find($line->item_id);
                 if ($item && $item->type === 'barang') {
                     $item->update(['stock' => $line->unit_price]);
+
+                    // Trigger low stock notification if below threshold
+                    $minStock = $item->min_stock ?? (int) Setting::get('min_stock_alert_threshold', 10);
+                    if ($item->stock <= $minStock) {
+                        $alertUsers = User::whereIn('role', ['super_admin', 'manager', 'admin_gudang', 'purchasing'])->get();
+                        foreach ($alertUsers as $alertUser) {
+                            $alertUser->notify(new LowStockNotification($item, $item->stock));
+                        }
+                    }
                 }
             }
             $opname->update(['status' => 'Completed']);
         });
+
+        try {
+            event(new StockUpdated("Penyesuaian Stock Opname {$opname->ref_number} selesai. Stok sistem telah diperbarui."));
+        } catch (\Throwable $e) {
+            Log::warning('StockUpdated event broadcast error: '.$e->getMessage());
+        }
 
         // Notify roles
         $usersToNotify = User::whereIn('role', ['manager', 'super_admin'])->get();
